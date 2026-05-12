@@ -87,7 +87,7 @@ class LocationViewModel:ObservableObject{
                 longitude: coordinate.longitude,
                 timeStamp: Date()
             )
-            self.checkIns.append(checkIn)
+            self.checkIns.insert(checkIn, at: 0)
         }
     }
         
