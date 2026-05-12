@@ -90,5 +90,12 @@ class LocationViewModel:ObservableObject{
             self.checkIns.insert(checkIn, at: 0)
         }
     }
-        
+    
+    func clearAll(){
+        self.checkIns.removeAll()
     }
+    
+    func enableLocation(){
+        self.locationService.startUpdatingLocation()
+    }
+}
