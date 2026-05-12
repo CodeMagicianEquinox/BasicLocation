@@ -36,7 +36,12 @@ class LocationViewModel:ObservableObject{
     
     
     init(){
-        
+        self.locationService.objectWillChange.sink{
+            [weak self] in
+            DispatchQueue.main.async {
+                self?.updateUIfromManager()
+            }
+        }.store(in: &cancellables)
     }
     
     
@@ -73,5 +78,17 @@ class LocationViewModel:ObservableObject{
         self.errorMessage = "Could not read location"
         self.viewState = .failed
         }
+    
+    func saveCheckIn(){
+        if let coordinate = self.locationService.location {
+            let checkIn = CheckIn(
+                id: UUID(),
+                latitude: coordinate.latitude,
+                longitude: coordinate.longitude,
+                timeStamp: Date()
+            )
+            self.checkIns.append(checkIn)
+        }
+    }
         
     }

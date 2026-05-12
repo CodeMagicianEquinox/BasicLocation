@@ -14,7 +14,7 @@ struct CheckIn: Identifiable{
     let timeStamp: Date
     
     init(id: UUID, latitude: Double, longitude: Double, timeStamp: Date) {
-        self.id = UUID()
+        self.id = id
         self.latitude = latitude
         self.longitude = longitude
         self.timeStamp = timeStamp
