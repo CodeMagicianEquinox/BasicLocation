@@ -80,22 +80,35 @@ class LocationViewModel:ObservableObject{
         }
     
     func saveCheckIn(){
-        if let coordinate = self.locationService.location {
-            let checkIn = CheckIn(
-                id: UUID(),
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude,
-                timeStamp: Date()
-            )
-            self.checkIns.insert(checkIn, at: 0)
+        if self.locationService.location == nil {
+            return
         }
+        
+        let coordinate: CLLocationCoordinate2D = self.locationService.location!
+        
+        let newCoord: CheckIn = CheckIn(
+            id: UUID(),
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            timeStamp: Date()
+        )
+        
+        self.checkIns.insert(newCoord, at: 0)
     }
-    
+
     func clearAll(){
         self.checkIns.removeAll()
     }
-    
+
     func enableLocation(){
+        self.errorMessage = ""
+        self.viewState = .loading
+        self.locationService.startUpdatingLocation()
+    }
+
+    func refreshButton(){
+        self.errorMessage = ""
+        self.viewState = .loading
         self.locationService.startUpdatingLocation()
     }
 }
