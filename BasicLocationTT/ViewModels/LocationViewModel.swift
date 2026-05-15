@@ -20,11 +20,15 @@ enum LocationViewState{
 }
 
 
+@MainActor
 class LocationViewModel:ObservableObject{
     
     @Published var viewState:LocationViewState = .needsPermission
     @Published var latitude:String = "--"
     @Published var longitude:String = "--"
+    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    @Published var lastCoordinate: CLLocationCoordinate2D?
+    @Published var isLocationAvailable: Bool = false
     
     @Published var errorMessage:String = ""
     @Published var checkIns:[CheckIn] = []
@@ -46,6 +50,10 @@ class LocationViewModel:ObservableObject{
     
     
     func updateUIfromManager(){
+        self.authorizationStatus = self.locationService.authStatus
+        self.lastCoordinate = self.locationService.location
+        self.isLocationAvailable = self.locationService.location != nil
+
         if self.locationService.isLoading == true{
             self.viewState = .loading
             return
@@ -56,28 +64,30 @@ class LocationViewModel:ObservableObject{
         if status == .notDetermined{
             self.viewState = .needsPermission
             return
-            
-            }
-        
-            if status == .denied || status == .restricted {
-                self.errorMessage = "Location access off"
-                self.viewState = .denied
-                
-            }
-            
-            if self.locationService.location != nil{
-                
-                let coordinate:CLLocationCoordinate2D = self.locationService.location!
-                self.latitude = String(format:"%.5f", coordinate.latitude)
-                self.longitude = String(format:"%.5f", coordinate.longitude)
-                
-                self.viewState = .ready
-                return
-            }
-        
-        self.errorMessage = "Could not read location"
-        self.viewState = .failed
         }
+        
+        if status == .denied || status == .restricted {
+            self.errorMessage = self.locationService.errorMessage ?? "Location access is off. Enable Location Services in Settings."
+            self.viewState = .denied
+            return
+                
+        }
+            
+        if self.locationService.location != nil{
+                
+            let coordinate:CLLocationCoordinate2D = self.locationService.location!
+            self.latitude = String(format:"%.5f", coordinate.latitude)
+            self.longitude = String(format:"%.5f", coordinate.longitude)
+            self.lastCoordinate = coordinate
+            self.isLocationAvailable = true
+                
+            self.viewState = .ready
+            return
+        }
+        
+        self.errorMessage = self.locationService.errorMessage ?? "Could not read location"
+        self.viewState = .failed
+    }
     
     func saveCheckIn(){
         if self.locationService.location == nil {
@@ -110,5 +120,9 @@ class LocationViewModel:ObservableObject{
         self.errorMessage = ""
         self.viewState = .loading
         self.locationService.startUpdatingLocation()
+    }
+
+    func stopLocationUpdates() {
+        self.locationService.stopUpdatingLocation()
     }
 }

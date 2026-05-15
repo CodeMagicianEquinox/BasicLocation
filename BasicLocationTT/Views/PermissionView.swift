@@ -10,11 +10,12 @@ import SwiftUI
 
 struct PermissionView:View {
     
+    let message: String
     let onEnable: () -> Void
     
     var body: some View {
         VStack(spacing:12){
-            Text("We need to access your location to save check-ins")
+            Text(message)
                 .multilineTextAlignment(.center)
             
             Button("Enable location"){
@@ -25,5 +26,5 @@ struct PermissionView:View {
 }
 
 #Preview {
-    PermissionView(onEnable: {})
+    PermissionView(message: "Location access is needed for current weather.", onEnable: {})
 }

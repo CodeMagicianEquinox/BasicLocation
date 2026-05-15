@@ -9,6 +9,7 @@ import Foundation
 import CoreLocation
 import Combine
 
+@MainActor
 class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     // The below object handles the CoreLocation API
@@ -17,6 +18,7 @@ class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var location: CLLocationCoordinate2D?
     @Published var isLoading: Bool = false
     @Published var authStatus: CLAuthorizationStatus = .notDetermined
+    @Published var errorMessage: String?
     
     override init() {
 
@@ -27,25 +29,33 @@ class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         manager.desiredAccuracy = kCLLocationAccuracyBest
         
-        // Request authorization up front; callers can control timing if needed
-        manager.requestWhenInUseAuthorization()
+        authStatus = manager.authorizationStatus
     }
     
     // Optionally expose helpers to start/stop updates
     func startUpdatingLocation() {
-        isLoading = true
-        manager.startUpdatingLocation()
+        errorMessage = nil
+        authStatus = manager.authorizationStatus
+
+        switch authStatus {
+        case .notDetermined:
+            isLoading = true
+            manager.requestWhenInUseAuthorization()
+        case .authorizedWhenInUse, .authorizedAlways:
+            isLoading = true
+            manager.startUpdatingLocation()
+        case .denied, .restricted:
+            isLoading = false
+            errorMessage = "Location access is turned off. Enable it in Settings to use current weather."
+        @unknown default:
+            isLoading = false
+            errorMessage = "Location permission is unavailable right now."
+        }
     }
     
     func stopUpdatingLocation() {
         manager.stopUpdatingLocation()
         isLoading = false
-    }
-    
-    private func requestLocation() {
-        isLoading = true
-        // Request a single location update
-        manager.requestLocation()
     }
     
     // MARK: - CLLocationManagerDelegate
@@ -55,10 +65,13 @@ class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
         authStatus = manager.authorizationStatus
         
         if authStatus == .authorizedWhenInUse || authStatus == .authorizedAlways{
-            
-            requestLocation()
+            isLoading = true
+            manager.startUpdatingLocation()
         } else {
             isLoading = false
+            if authStatus == .denied || authStatus == .restricted {
+                errorMessage = "Location access is turned off. Enable it in Settings to use current weather."
+            }
         }
     }
     
@@ -68,6 +81,7 @@ class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
             location = lastLocation.coordinate
         }
         
+        errorMessage = nil
         isLoading = false
     }
     
@@ -75,6 +89,7 @@ class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {
         
         isLoading = false
+        errorMessage = "Could not read your location. Please try again."
     }
 
 }
