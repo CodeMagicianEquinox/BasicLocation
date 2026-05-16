@@ -69,3 +69,5 @@ The app uses MVVM with these folders:
 Views/MotionView.swift: displays the UI, buttons, sensor values, and background color.
 ViewModels/MotionViewModel.swift: stores accelerometer/gyroscope values and contains the tilted/leveled logic.
 Services/MotionService.swift: uses CMMotionManager to read Core Motion sensor data.
+
+The sensor must be tested on a physical iPhone because the simulator does not provide real motion sensor data.
